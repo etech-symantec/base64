@@ -1,168 +1,72 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌠%3C/text%3E%3C/svg%3E">
-  <link rel="stylesheet" href="https://etech-symantec.github.io/style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600&display=swap" rel="stylesheet">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Base64 Converter</title>
-  <!-- PDF.js 라이브러리 -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-  <style>
-    :root {
-      --bg-color: #f9fafb;
-      --text-color: #111827;
-      --container-bg: #ffffff;
-      --border-color: #e5e7eb;
-      --primary: #3b82f6;
-      --primary-hover: #2563eb;
-    }
-    
-    [data-theme="dark"] {
-      --bg-color: #111827;
-      --text-color: #f9fafb;
-      --container-bg: #1f2937;
-      --border-color: #374151;
-    }
-
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      margin: 0;
-      padding: 3rem 1rem;
-      display: flex;
-      justify-content: center;
-      min-height: 100vh;
-      box-sizing: border-box;
-      transition: background-color 0.3s, color 0.3s;
-    }
-
-    /* 우측 상단 다크모드 버튼 (헤더 없음) */
-    #theme-toggle {
-      position: absolute;
-      top: 1.5rem;
-      right: 1.5rem;
-      background: var(--container-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 50%;
-      width: 44px;
-      height: 44px;
-      font-size: 1.25rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      transition: all 0.2s;
-    }
-
-    #theme-toggle:hover {
-      transform: scale(1.05);
-    }
-
-    .container {
-      width: 100%;
-      max-width: 700px;
-      background: var(--container-bg);
-      padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      border: 1px solid var(--border-color);
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-    }
-
-    .drop-zone {
-      border: 2px dashed var(--border-color);
-      border-radius: 8px;
-      padding: 3rem 1rem;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s;
-      background-color: rgba(0,0,0,0.01);
-    }
-
-    .drop-zone:hover, .drop-zone.dragover {
-      border-color: var(--primary);
-      background-color: rgba(59, 130, 246, 0.05);
-    }
-
-    .preview-container {
-      text-align: center;
-      display: none;
-      background: rgba(0,0,0,0.02);
-      padding: 1rem;
-      border-radius: 8px;
-      border: 1px solid var(--border-color);
-    }
-
-    canvas, img {
-      max-width: 100%;
-      max-height: 250px;
-      border-radius: 4px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .options {
-      display: flex;
-      gap: 1.25rem;
-      flex-wrap: wrap;
-      justify-content: center;
-      padding: 1rem;
-      background: var(--bg-color);
-      border-radius: 8px;
-      border: 1px solid var(--border-color);
-    }
-
-    .options label {
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-      font-size: 0.95rem;
-    }
-
-    textarea {
-      width: 100%;
-      height: 150px;
-      padding: 1rem;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      background: var(--bg-color);
-      color: var(--text-color);
-      font-family: ui-monospace, monospace;
-      font-size: 0.85rem;
-      resize: vertical;
-      box-sizing: border-box;
-      word-break: break-all;
-    }
-
-    button.copy-btn {
-      background-color: var(--primary);
-      color: white;
-      border: none;
-      padding: 1rem;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 1rem;
-      font-weight: 600;
-      transition: background-color 0.2s;
-    }
-
-    button.copy-btn:hover {
-      background-color: var(--primary-hover);
-    }
-
-    input[type="file"] { display: none; }
-  </style>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌠%3C/text%3E%3C/svg%3E">
+    <link rel="stylesheet" href="https://etech-symantec.github.io/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스크린샷 & PDF Base64 변환기</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- PDF.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.5);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(107, 114, 128, 0.8);
+        }
+    </style>
 </head>
-<body>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans transition-colors duration-200">
   <!-- 공통 헤더 + 제목 + 버전 -->
   <script>
     window.pageTitle = "Base64 변환기";
@@ -170,474 +74,532 @@
   </script> 
   <script src="https://etech-symantec.github.io/header.js"></script>
 
-  <!-- 우측 상단 다크모드 버튼 -->
-  <button id="theme-toggle" title="테마 변경">🌙</button>
+    <header class="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur sticky top-0 z-30">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-xl">
+                    <i class="fa-solid fa-file-pdf text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">스크린샷 & PDF Base64 변환기</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">클립보드(Ctrl+V), 드래그&드롭, PDF & 이미지 통합 지원</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="themeToggleBtn" title="다크/라이트 모드 전환" class="p-2.5 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-moon dark:hidden"></i>
+                    <i class="fa-solid fa-sun hidden dark:inline"></i>
+                </button>
+            </div>
+        </div>
+    </header>
 
-  <div class="container">
-    <div id="drop-zone" class="drop-zone">
-      <strong>클립보드 붙여넣기(Ctrl+V)</strong><br><br>
-      또는 파일을 드래그 앤 드롭 / 클릭하여 업로드<br>
-      <span style="font-size: 0.85em; color: #6b7280;">(이미지 및 PDF 지원)</span>
-    </div>
-    <input type="file" id="file-input" accept="image/*,application/pdf">
+    <main class="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-    <div class="preview-container" id="preview-container">
-      <img id="image-preview" style="display:none;" alt="미리보기">
-      <canvas id="pdf-preview" style="display:none;"></canvas>
-      <div id="file-info" style="margin-top:1rem; font-size:0.9rem; font-weight:600;"></div>
-    </div>
-
-    <div class="options" id="format-options">
-      <!-- Plain Base64 기본 선택 -->
-      <label><input type="radio" name="format" value="raw" checked> Plain Base64</label>
-      <label><input type="radio" name="format" value="dataUrl"> Data URL</label>
-      <label><input type="radio" name="format" value="html"> HTML Tag</label>
-      <label><input type="radio" name="format" value="markdown"> Markdown</label>
-    </div>
-
-    <textarea id="result-text" readonly placeholder="요청하신 대로 제목 헤더바를 제거하고, 라이트/다크모드 전환 아이콘을 우측 상단으로 배치한 단일 HTML 파일 코드입니다. 코드를 복사하여 `.html` 파일로 저장한 후 브라우저에서 실행하시면 됩니다.
-
-```html
-<!DOCTYPE html>
-<html lang="ko" data-theme="light">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Base64 Converter</title>
-    <!-- PDF.js 라이브러리 추가 -->
-    <script src="[https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js](https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js)"></script>
-    <style>
-        :root {
-            --bg-color: #f9fafb;
-            --surface-color: #ffffff;
-            --text-color: #1f2937;
-            --border-color: #e5e7eb;
-            --primary-color: #3b82f6;
-            --primary-hover: #2563eb;
-            --text-muted: #6b7280;
-        }
-
-        [data-theme="dark"] {
-            --bg-color: #111827;
-            --surface-color: #1f2937;
-            --text-color: #f9fafb;
-            --border-color: #374151;
-            --text-muted: #9ca3af;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.5;
-            padding: 2rem;
-            transition: background-color 0.3s, color 0.3s;
-            position: relative;
-            min-height: 100vh;
-        }
-
-        /* 우측 상단 테마 토글 버튼 */
-        #theme-toggle {
-            position: absolute;
-            top: 1.5rem;
-            right: 1.5rem;
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--text-color);
-            padding: 0.5rem;
-            border-radius: 50%;
-            transition: background-color 0.2s;
-        }
-
-        #theme-toggle:hover {
-            background-color: var(--border-color);
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 2rem auto;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .drop-zone {
-            border: 2px dashed var(--border-color);
-            border-radius: 0.5rem;
-            padding: 3rem 1rem;
-            text-align: center;
-            background-color: var(--surface-color);
-            cursor: pointer;
-            transition: border-color 0.2s, background-color 0.2s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .drop-zone.dragover {
-            border-color: var(--primary-color);
-            background-color: rgba(59, 130, 246, 0.05);
-        }
-
-        .drop-zone p {
-            color: var(--text-muted);
-            margin-bottom: 1rem;
-        }
-
-        .preview-container {
-            margin-top: 1rem;
-            max-width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        #img-preview {
-            max-width: 100%;
-            max-height: 300px;
-            object-fit: contain;
-            display: none;
-            border-radius: 0.25rem;
-            border: 1px solid var(--border-color);
-        }
-
-        #pdf-preview {
-            max-width: 100%;
-            max-height: 300px;
-            display: none;
-            border: 1px solid var(--border-color);
-            border-radius: 0.25rem;
-        }
-
-        #file-info {
-            font-size: 0.875rem;
-            color: var(--text-muted);
-        }
-
-        .controls {
-            background-color: var(--surface-color);
-            padding: 1rem;
-            border-radius: 0.5rem;
-            border: 1px solid var(--border-color);
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            align-items: center;
-        }
-
-        .format-options {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .format-options label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            cursor: pointer;
-        }
-
-        .output-wrapper {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        textarea {
-            width: 100%;
-            height: 250px;
-            padding: 1rem;
-            border: 1px solid var(--border-color);
-            border-radius: 0.5rem;
-            background-color: var(--surface-color);
-            color: var(--text-color);
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            font-size: 0.875rem;
-            resize: vertical;
-        }
-
-        textarea:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .btn {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .btn:hover {
-            background-color: var(--primary-hover);
-        }
-
-        .stats {
-            font-size: 0.875rem;
-            color: var(--text-muted);
-        }
-    </style>
-</head>
-<body>
-
-    <!-- 우측 상단 테마 버튼 -->
-    <button id="theme-toggle" title="테마 변경">🌙</button>
-
-    <div class="container">
-        <!-- 드롭존 (붙여넣기, 클릭, 드래그앤드롭) -->
-        <div class="drop-zone" id="drop-zone">
-            <p>여기를 클릭하거나 이미지를 드롭하세요. (이미지 및 PDF 지원)<br>또는 Ctrl+V로 클립보드에서 붙여넣기</p>
-            <input type="file" id="file-input" accept="image/*,application/pdf" style="display: none;">
+        <!-- Left Column: Input / Drag & Drop Zone + Preview -->
+        <section class="lg:col-span-5 flex flex-col space-y-4">
             
-            <div class="preview-container">
-                <img id="img-preview" alt="미리보기">
-                <canvas id="pdf-preview"></canvas>
-                <div id="file-info"></div>
+            <!-- Drag and drop zone -->
+            <div id="dropZone" class="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-sky-500 dark:hover:border-sky-400 rounded-2xl p-6 text-center cursor-pointer bg-white dark:bg-slate-800/50 hover:bg-sky-50/50 dark:hover:bg-sky-950/20 transition duration-200 flex flex-col items-center justify-center min-h-[220px] relative group overflow-hidden">
+                <input type="file" id="fileInput" accept="image/*,application/pdf" class="hidden">
+                
+                <div id="dropZoneContent" class="space-y-3 pointer-events-none">
+                    <div class="w-14 h-14 mx-auto rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-400 flex items-center justify-center text-2xl group-hover:scale-110 transition duration-200">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-slate-700 dark:text-slate-200 text-sm">
+                            <span class="text-sky-600 dark:text-sky-400 underline decoration-sky-400/30 underline-offset-4">클릭하여 파일 선택</span> 또는 드래그 & 드롭
+                        </p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                            <kbd class="px-2 py-1 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded text-[11px] font-mono shadow-sm">Ctrl</kbd> + <kbd class="px-2 py-1 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded text-[11px] font-mono shadow-sm">V</kbd> 로 복사한 이미지/PDF를 직접 붙여넣으세요!
+                        </p>
+                    </div>
+                    <div class="flex items-center justify-center gap-2 pt-1 text-[11px] text-slate-400">
+                        <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">PNG / JPG / WEBP</span>
+                        <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">PDF 문서</span>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <!-- 포맷 컨트롤 -->
-        <div class="controls">
-            <div class="format-options">
-                <label><input type="radio" name="format" value="raw" checked> Plain Base64</label>
-                <label><input type="radio" name="format" value="dataUrl"> Data URL</label>
-                <label id="label-html"><input type="radio" name="format" value="html"> HTML 태그</label>
-                <label id="label-css"><input type="radio" name="format" value="css"> CSS Background</label>
-                <label id="label-md"><input type="radio" name="format" value="markdown"> Markdown</label>
-            </div>
-        </div>
+            <div id="fileInfoContainer" class="hidden flex-1 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 flex flex-col justify-between shadow-sm">
+                <div>
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60 mb-4">
+                        <div class="flex items-center gap-2">
+                            <span id="fileTypeBadge" class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-md bg-sky-100 text-sky-700 dark:bg-sky-900/60 dark:text-sky-300">IMAGE</span>
+                            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">파일 정보</h2>
+                        </div>
+                        <button id="clearBtn" class="text-xs font-medium text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 flex items-center gap-1 transition">
+                            <i class="fa-solid fa-trash-can text-xs"></i> 초기화
+                        </button>
+                    </div>
 
-        <!-- 결과 출력 영역 -->
-        <div class="output-wrapper">
-            <textarea id="output" readonly placeholder="변환된 Base64 데이터가 여기에 표시됩니다..."></textarea>
-            <div class="actions">
-                <div class="stats" id="stats-info">크기: 0 bytes | 예상 토큰: 0</div>
-                <button class="btn" id="copy-btn">클립보드에 복사</button>
+                    <!-- Thumbnail / PDF Canvas Container -->
+                    <div id="previewWrapper" class="relative bg-slate-100 dark:bg-slate-900/80 rounded-xl overflow-hidden border border-slate-200/60 dark:border-slate-700/40 flex items-center justify-center p-2 min-h-[200px] max-h-[300px] mb-4">
+                        <img id="imagePreview" class="hidden max-h-[280px] w-auto max-w-full object-contain rounded shadow-sm" alt="이미지 미리보기">
+                        <canvas id="pdfCanvas" class="hidden max-h-[280px] w-auto max-w-full object-contain rounded shadow-sm"></canvas>
+                        <div id="loadingSpinner" class="hidden flex flex-col items-center gap-2 text-sky-600 dark:text-sky-400">
+                            <i class="fa-solid fa-circle-notch fa-spin text-2xl"></i>
+                            <span class="text-xs">PDF 미리보기 생성 중...</span>
+                        </div>
+                    </div>
+
+                    <!-- Metadata Grid -->
+                    <div class="grid grid-cols-2 gap-3 text-xs">
+                        <div class="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <span class="text-slate-400 block mb-0.5" id="metaDimLabel">해상도 / 페이지</span>
+                            <span id="metaDimensions" class="font-mono font-semibold text-slate-700 dark:text-slate-200">-</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <span class="text-slate-400 block mb-0.5">파일 용량</span>
+                            <span id="metaSize" class="font-mono font-semibold text-slate-700 dark:text-slate-200">-</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <span class="text-slate-400 block mb-0.5">파일 포맷</span>
+                            <span id="metaMime" class="font-mono font-semibold text-slate-700 dark:text-slate-200 truncate block" title="-">-</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <span class="text-slate-400 block mb-0.5">Base64 길인 (자)</span>
+                            <span id="metaLength" class="font-mono font-semibold text-sky-600 dark:text-sky-400">-</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+        </section>
+
+        <section class="lg:col-span-7 flex flex-col space-y-4">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 flex-1 flex flex-col justify-between shadow-sm">
+                <div>
+                    <!-- Format Tabs Header -->
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60 mb-4">
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">출력 포맷 선택</h2>
+                    </div>
+
+                    <!-- Radio options for formats -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4" id="formatRadioGroup">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="outputFormat" value="dataUrl" class="peer hidden">
+                            <div class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-sky-500 peer-checked:text-white peer-checked:border-sky-500 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition text-center">
+                                Data URL
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="outputFormat" value="raw" class="peer hidden" checked>
+                            <div class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-sky-500 peer-checked:text-white peer-checked:border-sky-500 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition text-center">
+                                Plain Base64
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="outputFormat" value="htmlTag" class="peer hidden">
+                            <div id="htmlTagLabel" class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-sky-500 peer-checked:text-white peer-checked:border-sky-500 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition text-center">
+                                HTML &lt;img&gt;
+                            </div>
+                        </label>
+                        <label id="cssOptionWrapper" class="cursor-pointer">
+                            <input type="radio" name="outputFormat" value="css" class="peer hidden">
+                            <div class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-sky-500 peer-checked:text-white peer-checked:border-sky-500 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition text-center">
+                                CSS Background
+                            </div>
+                        </label>
+                        <label class="cursor-pointer col-span-2 sm:col-span-1">
+                            <input type="radio" name="outputFormat" value="markdown" class="peer hidden">
+                            <div class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-sky-500 peer-checked:text-white peer-checked:border-sky-500 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition text-center">
+                                Markdown
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Result Text Area -->
+                    <div class="relative">
+                        <textarea id="outputTextArea" readonly placeholder="파일(이미지 또는 PDF)을 붙여넣거나 업로드하면 이곳에 Base64 코드가 생성됩니다..." class="w-full h-64 sm:h-80 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 font-mono text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500 custom-scrollbar resize-none leading-relaxed select-all"></textarea>
+                    </div>
+                </div>
+
+                <!-- Action Controls -->
+                <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/60 flex flex-wrap items-center justify-between gap-3">
+                    <div class="text-xs text-slate-400 flex items-center gap-3">
+                        <span><strong id="charCount" class="font-mono text-slate-600 dark:text-slate-300">0</strong> 자</span>
+                        <span class="text-slate-300 dark:text-slate-700">|</span>
+                        <span>약 <strong id="tokenCount" class="font-mono text-slate-600 dark:text-slate-300">0</strong> 토큰</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button id="downloadBtn" disabled class="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-download"></i> TXT 다운로드
+                        </button>
+                        <button id="copyBtn" disabled class="px-5 py-2 bg-sky-600 hover:bg-sky-500 active:scale-95 text-white disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-xs font-semibold shadow-md shadow-sky-500/20 transition flex items-center gap-1.5">
+                            <i class="fa-regular fa-copy"></i> 복사하기
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Toast Component -->
+    <div id="toast" class="fixed bottom-6 right-6 translate-y-12 opacity-0 transition-all duration-300 bg-slate-900 dark:bg-sky-600 text-white px-4 py-3 rounded-xl shadow-lg flex items-center space-x-2 z-50 pointer-events-none text-xs font-medium">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 dark:text-white"></i>
+        <span id="toastMsg">복사되었습니다!</span>
     </div>
 
     <script>
-        // PDF.js 워커 설정
-        pdfjsLib.GlobalWorkerOptions.workerSrc = '[https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js](https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js)';
+        // DOM Elements
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfoContainer = document.getElementById('fileInfoContainer');
+        const fileTypeBadge = document.getElementById('fileTypeBadge');
+        const imagePreview = document.getElementById('imagePreview');
+        const pdfCanvas = document.getElementById('pdfCanvas');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const metaDimLabel = document.getElementById('metaDimLabel');
+        const metaDimensions = document.getElementById('metaDimensions');
+        const metaSize = document.getElementById('metaSize');
+        const metaMime = document.getElementById('metaMime');
+        const metaLength = document.getElementById('metaLength');
+        const outputTextArea = document.getElementById('outputTextArea');
+        const formatRadios = document.querySelectorAll('input[name="outputFormat"]');
+        const htmlTagLabel = document.getElementById('htmlTagLabel');
+        const cssOptionWrapper = document.getElementById('cssOptionWrapper');
+        const charCount = document.getElementById('charCount');
+        const tokenCount = document.getElementById('tokenCount');
+        const copyBtn = document.getElementById('copyBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+        const toastIcon = document.getElementById('toastIcon');
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
 
-        const themeToggle = document.getElementById('theme-toggle');
-        const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('file-input');
-        const imgPreview = document.getElementById('img-preview');
-        const pdfPreview = document.getElementById('pdf-preview');
-        const fileInfo = document.getElementById('file-info');
-        const output = document.getElementById('output');
-        const copyBtn = document.getElementById('copy-btn');
-        const statsInfo = document.getElementById('stats-info');
-        const radioBtns = document.querySelectorAll('input[name="format"]');
+        // Application State Variables
+        let currentFileType = 'image'; // 'image' | 'pdf'
+        let currentRawBase64 = '';
+        let currentFullDataUrl = '';
+        let currentMimeType = 'image/png';
+        let currentFileName = 'file';
+
+        // --- Theme Management ---
+        function initTheme() {
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
         
-        let currentFile = {
-            base64Data: '',
-            mimeType: '',
-            isPdf: false
-        };
-
-        // 테마 변경 로직
-        themeToggle.addEventListener('click', () => {
-            const html = document.documentElement;
-            const isDark = html.getAttribute('data-theme') === 'dark';
-            html.setAttribute('data-theme', isDark ? 'light' : 'dark');
-            themeToggle.textContent = isDark ? '🌙' : '☀️';
+        themeToggleBtn.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            if (document.documentElement.classList.contains('dark')) {
+                localStorage.theme = 'dark';
+            } else {
+                localStorage.theme = 'light';
+            }
         });
 
-        // 포맷 변경 시 출력 업데이트
-        radioBtns.forEach(btn => {
-            btn.addEventListener('change', updateOutput);
-        });
+        initTheme();
 
-        // 클립보드 붙여넣기 이벤트
-        document.addEventListener('paste', (e) => {
+        // Clipboard Paste Events
+        window.addEventListener('paste', (e) => {
             const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-            for (let index in items) {
-                const item = items[index];
-                if (item.kind === 'file' && (item.type.startsWith('image/') || item.type === 'application/pdf')) {
+            for (let item of items) {
+                if (item.type.indexOf('image') !== -1 || item.type === 'application/pdf') {
                     const blob = item.getAsFile();
-                    processFile(blob);
+                    const defaultName = item.type === 'application/pdf' ? 'pasted-document.pdf' : 'pasted-screenshot.png';
+                    processFile(blob, defaultName);
+                    showToast('클립보드 데이터가 붙여넣어졌습니다!');
+                    break;
                 }
             }
         });
 
-        // 드래그 앤 드롭 이벤트
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('dragover');
-        });
-        dropZone.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-        });
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                processFile(e.dataTransfer.files[0]);
-            }
-        });
-
-        // 클릭하여 파일 선택
+        // Drag and Drop Events
         dropZone.addEventListener('click', () => fileInput.click());
+
         fileInput.addEventListener('change', (e) => {
             if (e.target.files && e.target.files[0]) {
-                processFile(e.target.files[0]);
+                const file = e.target.files[0];
+                processFile(file, file.name);
             }
         });
 
-        // 파일 처리 (Base64 변환 및 미리보기)
-        function processFile(file) {
-            if (!file) return;
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.add('border-sky-500', 'bg-sky-50/70', 'dark:bg-sky-950/40');
+            }, false);
+        });
 
-            const isPdf = file.type === 'application/pdf';
-            currentFile.mimeType = file.type;
-            currentFile.isPdf = isPdf;
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.remove('border-sky-500', 'bg-sky-50/70', 'dark:bg-sky-950/40');
+            }, false);
+        });
 
-            // UI 상태 업데이트
-            imgPreview.style.display = 'none';
-            pdfPreview.style.display = 'none';
-            document.getElementById('label-css').style.display = isPdf ? 'none' : 'flex';
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files && files.length > 0) {
+                const file = files[0];
+                if (file.type.startsWith('image/') || file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+                    processFile(file, file.name);
+                } else {
+                    showToast('이미지 또는 PDF 파일만 지원됩니다.', true);
+                }
+            }
+        });
+
+        function processFile(file, nameHint) {
+            currentMimeType = file.type || (nameHint.endsWith('.pdf') ? 'application/pdf' : 'image/png');
+            currentFileName = nameHint || 'file';
+            currentFileType = (currentMimeType === 'application/pdf' || nameHint.endsWith('.pdf')) ? 'pdf' : 'image';
+
+            // Format size
+            const sizeInKB = (file.size / 1024).toFixed(1);
+            const sizeFormatted = file.size > 1024 * 1024 
+                ? (file.size / (1024 * 1024)).toFixed(2) + ' MB' 
+                : sizeInKB + ' KB';
             
-            // 만약 PDF인데 CSS가 선택되어 있다면 Plain Base64로 폴백
-            if (isPdf && document.querySelector('input[name="format"]:checked').value === 'css') {
-                document.querySelector('input[value="raw"]').checked = true;
+            metaSize.textContent = sizeFormatted;
+            metaMime.textContent = currentMimeType;
+            metaMime.title = currentMimeType;
+
+            // UI updates based on File Type
+            if (currentFileType === 'pdf') {
+                fileTypeBadge.textContent = 'PDF';
+                fileTypeBadge.className = 'px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-md bg-rose-100 text-rose-700 dark:bg-rose-900/60 dark:text-rose-300';
+                metaDimLabel.textContent = '페이지 수';
+                htmlTagLabel.innerHTML = 'HTML &lt;iframe&gt;';
+                cssOptionWrapper.classList.add('hidden');
+                
+                // Switch radio to dataUrl if CSS was selected
+                const selectedRadio = document.querySelector('input[name="outputFormat"]:checked');
+                if (selectedRadio && selectedRadio.value === 'css') {
+                    document.querySelector('input[name="outputFormat"][value="dataUrl"]').checked = true;
+                }
+            } else {
+                fileTypeBadge.textContent = 'IMAGE';
+                fileTypeBadge.className = 'px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-md bg-sky-100 text-sky-700 dark:bg-sky-900/60 dark:text-sky-300';
+                metaDimLabel.textContent = '해상도';
+                htmlTagLabel.innerHTML = 'HTML &lt;img&gt;';
+                cssOptionWrapper.classList.remove('hidden');
             }
 
             const reader = new FileReader();
-            reader.onload = function(event) {
-                const dataUrl = event.target.result;
-                currentFile.base64Data = dataUrl.split(',')[1];
-                
-                if (isPdf) {
-                    renderPdfPreview(dataUrl);
+            reader.onload = (e) => {
+                currentFullDataUrl = e.target.result;
+                currentRawBase64 = currentFullDataUrl.split(',')[1] || '';
+
+                if (currentFileType === 'image') {
+                    renderImagePreview();
                 } else {
-                    imgPreview.src = dataUrl;
-                    imgPreview.style.display = 'block';
-                    fileInfo.textContent = `이미지 크기: ${(file.size / 1024).toFixed(2)} KB`;
+                    renderPdfPreview(e.target.result);
                 }
-                
-                updateOutput();
             };
+
             reader.readAsDataURL(file);
         }
 
-        // PDF 첫 페이지 렌더링
+        function renderImagePreview() {
+            pdfCanvas.classList.add('hidden');
+            loadingSpinner.classList.add('hidden');
+            imagePreview.classList.remove('hidden');
+
+            const img = new Image();
+            img.onload = () => {
+                metaDimensions.textContent = `${img.width} × ${img.height} px`;
+                imagePreview.src = currentFullDataUrl;
+                fileInfoContainer.classList.remove('hidden');
+
+                updateFormattedOutput();
+                enableControls(true);
+            };
+            img.src = currentFullDataUrl;
+        }
+
         async function renderPdfPreview(dataUrl) {
+            imagePreview.classList.add('hidden');
+            pdfCanvas.classList.add('hidden');
+            loadingSpinner.classList.remove('hidden');
+            fileInfoContainer.classList.remove('hidden');
+
             try {
-                const pdfData = atob(dataUrl.split(',')[1]);
-                const uint8Array = new Uint8Array(pdfData.length);
-                for (let i = 0; i < pdfData.length; i++) {
-                    uint8Array[i] = pdfData.charCodeAt(i);
-                }
+                const loadingTask = pdfjsLib.getDocument(dataUrl);
+                const pdf = await loadingTask.promise;
 
-                const pdf = await pdfjsLib.getDocument({ data: uint8Array }).promise;
-                fileInfo.textContent = `PDF 로드됨 (총 ${pdf.numPages} 페이지)`;
-                
+                metaDimensions.textContent = `${pdf.numPages} 페이지`;
+
+                // Render page 1
                 const page = await pdf.getPage(1);
-                const scale = 1.0;
-                const viewport = page.getViewport({ scale: scale });
+                const viewport = page.getViewport({ scale: 1.0 });
 
-                const canvas = document.getElementById('pdf-preview');
+                // Set canvas size suitable for preview
+                const scale = Math.min(280 / viewport.height, 400 / viewport.width, 1.2);
+                const scaledViewport = page.getViewport({ scale });
+
+                const canvas = pdfCanvas;
                 const context = canvas.getContext('2d');
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
+                canvas.height = scaledViewport.height;
+                canvas.width = scaledViewport.width;
 
                 const renderContext = {
                     canvasContext: context,
-                    viewport: viewport
+                    viewport: scaledViewport
                 };
-                
+
                 await page.render(renderContext).promise;
-                canvas.style.display = 'block';
-            } catch (error) {
-                console.error('PDF 렌더링 에러:', error);
-                fileInfo.textContent = 'PDF 미리보기를 생성할 수 없습니다.';
+
+                loadingSpinner.classList.add('hidden');
+                pdfCanvas.classList.remove('hidden');
+
+                updateFormattedOutput();
+                enableControls(true);
+            } catch (err) {
+                console.error('PDF 렌더링 에러:', err);
+                loadingSpinner.classList.add('hidden');
+                metaDimensions.textContent = '미리보기 불가';
+                showToast('PDF 미리보기를 불러올 수 없지만 Base64 변환은 완료되었습니다.', true);
+                
+                updateFormattedOutput();
+                enableControls(true);
             }
         }
 
-        // 출력 형식에 맞게 텍스트 에어리어 업데이트
-        function updateOutput() {
-            if (!currentFile.base64Data) return;
-
-            const format = document.querySelector('input[name="format"]:checked').value;
-            const dataUrl = `data:${currentFile.mimeType};base64,${currentFile.base64Data}`;
-            let result = '';
-
-            switch(format) {
-                case 'raw':
-                    result = currentFile.base64Data;
-                    break;
-                case 'dataUrl':
-                    result = dataUrl;
-                    break;
-                case 'html':
-                    if (currentFile.isPdf) {
-                        result = `<iframe src="${dataUrl}" width="100%" height="600px"></iframe>`;
-                    } else {
-                        result = `<img src="${dataUrl}" alt="Base64 Image" />`;
-                    }
-                    break;
-                case 'css':
-                    result = `background-image: url('${dataUrl}');`;
-                    break;
-                case 'markdown':
-                    if (currentFile.isPdf) {
-                        result = `[PDF Document](${dataUrl})`;
-                    } else {
-                        result = `![Base64 Image](${dataUrl})`;
-                    }
-                    break;
-            }
-
-            output.value = result;
-            
-            // 통계 업데이트
-            const bytes = result.length;
-            const estimatedTokens = Math.ceil(bytes / 4); // LLM 입력 기준 단순 계산
-            statsInfo.textContent = `문자열 길이: ${bytes.toLocaleString()} 자 | 예상 토큰: ~${estimatedTokens.toLocaleString()}`;
+        function getSelectedFormat() {
+            const selectedRadio = document.querySelector('input[name="outputFormat"]:checked');
+            return selectedRadio ? selectedRadio.value : 'dataUrl';
         }
 
-        // 복사 기능
-        copyBtn.addEventListener('click', () => {
-            if (!output.value) return;
+        function updateFormattedOutput() {
+            if (!currentFullDataUrl) return;
+
+            const format = getSelectedFormat();
+            let resultText = '';
+
+            if (currentFileType === 'image') {
+                switch (format) {
+                    case 'dataUrl':
+                        resultText = currentFullDataUrl;
+                        break;
+                    case 'raw':
+                        resultText = currentRawBase64;
+                        break;
+                    case 'htmlTag':
+                        resultText = `<img src="${currentFullDataUrl}" alt="${currentFileName}" />`;
+                        break;
+                    case 'css':
+                        resultText = `background-image: url('${currentFullDataUrl}');`;
+                        break;
+                    case 'markdown':
+                        resultText = `![${currentFileName}](${currentFullDataUrl})`;
+                        break;
+                }
+            } else {
+                // PDF Output Formats
+                switch (format) {
+                    case 'dataUrl':
+                        resultText = currentFullDataUrl;
+                        break;
+                    case 'raw':
+                        resultText = currentRawBase64;
+                        break;
+                    case 'htmlTag':
+                        resultText = `<iframe src="${currentFullDataUrl}" width="100%" height="600px" title="${currentFileName}"></iframe>`;
+                        break;
+                    case 'markdown':
+                        resultText = `[${currentFileName}](${currentFullDataUrl})`;
+                        break;
+                    default:
+                        resultText = currentFullDataUrl;
+                }
+            }
+
+            outputTextArea.value = resultText;
             
-            output.select();
-            document.execCommand('copy');
-            
-            const originalText = copyBtn.textContent;
-            copyBtn.textContent = '복사 완료!';
-            copyBtn.style.backgroundColor = '#10b981'; // Success color
-            
-            setTimeout(() => {
-                copyBtn.textContent = originalText;
-                copyBtn.style.backgroundColor = '';
-            }, 2000);
+            const len = resultText.length;
+            charCount.textContent = len.toLocaleString();
+            // Rough estimation for LLM tokens (~4 characters per token for Base64)
+            tokenCount.textContent = Math.ceil(len / 4).toLocaleString();
+            metaLength.textContent = currentRawBase64.length.toLocaleString();
+        }
+
+        formatRadios.forEach(radio => {
+            radio.addEventListener('change', updateFormattedOutput);
         });
+
+        function enableControls(enable) {
+            copyBtn.disabled = !enable;
+            downloadBtn.disabled = !enable;
+        }
+
+        copyBtn.addEventListener('click', () => {
+            if (!outputTextArea.value) return;
+
+            outputTextArea.select();
+            try {
+                document.execCommand('copy');
+                showToast('클립보드에 복사되었습니다!');
+            } catch (err) {
+                showToast('복사에 실패했습니다.', true);
+            }
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            if (!outputTextArea.value) return;
+
+            const ext = currentFileType === 'pdf' ? '_pdf_base64.txt' : '_image_base64.txt';
+            const blob = new Blob([outputTextArea.value], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentFileName.replace(/\.[^/.]+$/, '')}${ext}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('텍스트 파일로 저장되었습니다!');
+        });
+
+        clearBtn.addEventListener('click', () => {
+            currentRawBase64 = '';
+            currentFullDataUrl = '';
+            outputTextArea.value = '';
+            imagePreview.src = '';
+            imagePreview.classList.add('hidden');
+            pdfCanvas.classList.add('hidden');
+            loadingSpinner.classList.add('hidden');
+            fileInfoContainer.classList.add('hidden');
+            fileInput.value = '';
+            charCount.textContent = '0';
+            tokenCount.textContent = '0';
+            metaLength.textContent = '-';
+            enableControls(false);
+            showToast('초기화되었습니다.');
+        });
+
+        let toastTimeout;
+        function showToast(message, isError = false) {
+            clearTimeout(toastTimeout);
+            toastMsg.textContent = message;
+            
+            if (isError) {
+                toast.classList.remove('bg-slate-900', 'dark:bg-sky-600');
+                toast.classList.add('bg-rose-600');
+                toastIcon.className = 'fa-solid fa-circle-exclamation text-white';
+            } else {
+                toast.classList.remove('bg-rose-600');
+                toast.classList.add('bg-slate-900', 'dark:bg-sky-600');
+                toastIcon.className = 'fa-solid fa-circle-check text-emerald-400 dark:text-white';
+            }
+
+            toast.classList.remove('translate-y-12', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-12', 'opacity-0');
+            }, 3000);
+        }
     </script>
 </body>
 </html>
