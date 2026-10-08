@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스크린샷 Base64 변환기</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.5);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(107, 114, 128, 0.8);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans transition-colors duration-200">
+
+    <header class="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur sticky top-0 z-30">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-xl">
+                    <i class="fa-solid fa-paste text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">스크린샷 Base64 변환기</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">클립보드 이미지 & 파일 대화상자 지원</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="themeToggleBtn" title="다크/라이트 모드 전환" class="p-2.5 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-moon dark:hidden"></i>
+                    <i class="fa-solid fa-sun hidden dark:inline"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left Column: Input / Drag & Drop Zone + Preview -->
+        <section class="lg:col-span-5 flex flex-col space-y-4">
+            
+            <!-- Drag and drop zone -->
+            <div id="dropZone" class="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-sky-500 dark:hover:border-sky-400 rounded-2xl p-6 text-center cursor-pointer bg-white dark:bg-slate-800/50 hover:bg-sky-50/50 dark:hover:bg-sky-950/20 transition duration-200 flex flex-col items-center justify-center min-h-[220px] relative group overflow-hidden">
+                <input type="file" id="fileInput" accept="image/*" class="hidden">
+                
+                <div id="dropZoneContent" class="space-y-3 pointer-events-none">
+                    <div class="w-14 h-14 mx-auto rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-400 flex items-center justify-center text-2xl group-hover:scale-110 transition duration-200">
+                        <i class="fa-regular fa-image"></i>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-slate-700 dark:text-slate-200 text-sm">
+                            <span class="text-sky-600 dark:text-sky-400 underline decoration-sky-400/30 underline-offset-4">클릭하여 파일 선택</span> 또는 드래그 & 드롭
+                        </p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                            <kbd class="px-2 py-1 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded text-[11px] font-mono shadow-sm">Ctrl</kbd> + <kbd class="px-2 py-1 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded text-[11px] font-mono shadow-sm">V</kbd> 로 캡처한 이미지를 직접 붙여넣으세요!
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Image Info & Preview Panel -->
+            <div id="imageInfoContainer" class="hidden flex-1 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 flex flex-col justify-between shadow-sm">
+                <div>
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60 mb-4">
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">이미지 정보</h2>
+                        <button id="clearBtn" class="text-xs font-medium text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 flex items-center gap-1 transition">
+                            <i class="fa-solid fa-trash-can text-xs"></i> 초기화
+                        </button>
+                    </div>
+
+                    <!-- Thumbnail Container -->
+                    <div class="relative bg-slate-100 dark:bg-slate-900/80 rounded-xl overflow-hidden border border-slate-200/60 dark:border-slate-700/40 flex items-center justify-center p-2 min-h-[180px] max-h-[300px] mb-4">
+                        <img id="imagePreview" class="max-h-[280px] w-auto max-w-full object-contain rounded shadow-sm" alt="이미지 미리보기">
+                    </div>
+
+                    <!-- Metadata Grid -->
+                    <div class="grid grid-cols-2 gap-3 text-xs">
+                        <div class="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <span class="text-slate-400 block mb-0.5">해상도 (가로 x 세로)</span>
+                            <span id="metaDimensions" class="font-mono font-semibold text-slate-700 dark:text-slate-200">-</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <span class="text-slate-400 block mb-0.5">파일 용량</span>
+                            <span id="metaSize" class="font-mono font-semibold text-slate-700 dark:text-slate-200">-</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <span class="text-slate-400 block mb-0.5">이미지 포맷</span>
+                            <span id="metaMime" class="font-mono font-semibold text-slate-700 dark:text-slate-200">-</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <span class="text-slate-400 block mb-0.5">Base64 길인 (자)</span>
+                            <span id="metaLength" class="font-mono font-semibold text-sky-600 dark:text-sky-400">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="lg:col-span-7 flex flex-col space-y-4">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 flex-1 flex flex-col justify-between shadow-sm">
+                <div>
+                    <!-- Format Tabs Header -->
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60 mb-4">
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">출력 포맷 선택</h2>
+                    </div>
+
+                    <!-- Radio options for formats -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4" id="formatRadioGroup">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="outputFormat" value="dataUrl" class="peer hidden" checked>
+                            <div class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-sky-500 peer-checked:text-white peer-checked:border-sky-500 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition text-center">
+                                Data URL
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="outputFormat" value="raw" class="peer hidden">
+                            <div class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-sky-500 peer-checked:text-white peer-checked:border-sky-500 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition text-center">
+                                Plain Base64
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="outputFormat" value="img" class="peer hidden">
+                            <div class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-sky-500 peer-checked:text-white peer-checked:border-sky-500 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition text-center">
+                                HTML &lt;img&gt;
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="outputFormat" value="css" class="peer hidden">
+                            <div class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-sky-500 peer-checked:text-white peer-checked:border-sky-500 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition text-center">
+                                CSS Background
+                            </div>
+                        </label>
+                        <label class="cursor-pointer col-span-2 sm:col-span-1">
+                            <input type="radio" name="outputFormat" value="markdown" class="peer hidden">
+                            <div class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-sky-500 peer-checked:text-white peer-checked:border-sky-500 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition text-center">
+                                Markdown
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Result Text Area -->
+                    <div class="relative">
+                        <textarea id="outputTextArea" readonly placeholder="스크린샷을 붙여넣으면 이 곳에 Base64 코드가 생성됩니다..." class="w-full h-64 sm:h-80 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 font-mono text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500 custom-scrollbar resize-none leading-relaxed select-all"></textarea>
+                    </div>
+                </div>
+
+                <!-- Action Controls -->
+                <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/60 flex flex-wrap items-center justify-between gap-3">
+                    <div class="text-xs text-slate-400">
+                        <span id="charCount">0</span> 자
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button id="downloadBtn" disabled class="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-download"></i> TXT 다운로드
+                        </button>
+                        <button id="copyBtn" disabled class="px-5 py-2 bg-sky-600 hover:bg-sky-500 active:scale-95 text-white disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-xs font-semibold shadow-md shadow-sky-500/20 transition flex items-center gap-1.5">
+                            <i class="fa-regular fa-copy"></i> 복사하기
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="toast" class="fixed bottom-6 right-6 translate-y-12 opacity-0 transition-all duration-300 bg-slate-900 dark:bg-sky-600 text-white px-4 py-3 rounded-xl shadow-lg flex items-center space-x-2 z-50 pointer-events-none text-xs font-medium">
+        <i class="fa-solid fa-circle-check text-emerald-400 dark:text-white"></i>
+        <span id="toastMsg">복사되었습니다!</span>
+    </div>
+
+    <script>
+        // DOM Elements
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const imageInfoContainer = document.getElementById('imageInfoContainer');
+        const imagePreview = document.getElementById('imagePreview');
+        const metaDimensions = document.getElementById('metaDimensions');
+        const metaSize = document.getElementById('metaSize');
+        const metaMime = document.getElementById('metaMime');
+        const metaLength = document.getElementById('metaLength');
+        const outputTextArea = document.getElementById('outputTextArea');
+        const formatRadios = document.querySelectorAll('input[name="outputFormat"]');
+        const charCount = document.getElementById('charCount');
+        const copyBtn = document.getElementById('copyBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+
+        // Application State Variables
+        let currentRawBase64 = '';
+        let currentFullDataUrl = '';
+        let currentMimeType = 'image/png';
+        let currentFileName = 'screenshot';
+
+        // --- Theme Management ---
+        function initTheme() {
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+        
+        themeToggleBtn.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            if (document.documentElement.classList.contains('dark')) {
+                localStorage.theme = 'dark';
+            } else {
+                localStorage.theme = 'light';
+            }
+        });
+
+        initTheme();
+
+        // --- Clipboard & Paste Events ---
+        window.addEventListener('paste', (e) => {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (let item of items) {
+                if (item.type.indexOf('image') !== -1) {
+                    const blob = item.getAsFile();
+                    processImageFile(blob, 'pasted-screenshot');
+                    showToast('클립보드 스크린샷이 붙여넣어졌습니다!');
+                    break;
+                }
+            }
+        });
+
+        // --- Drag and Drop Events ---
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+                processImageFile(file, file.name);
+            }
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.add('border-sky-500', 'bg-sky-50/70', 'dark:bg-sky-950/40');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.remove('border-sky-500', 'bg-sky-50/70', 'dark:bg-sky-950/40');
+            }, false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files && files.length > 0) {
+                const file = files[0];
+                if (file.type.startsWith('image/')) {
+                    processImageFile(file, file.name);
+                } else {
+                    showToast('이미지 파일만 지원됩니다.', true);
+                }
+            }
+        });
+
+        function processImageFile(file, nameHint) {
+            currentMimeType = file.type || 'image/png';
+            currentFileName = nameHint || 'screenshot';
+
+            // Format size
+            const sizeInKB = (file.size / 1024).toFixed(1);
+            const sizeFormatted = file.size > 1024 * 1024 
+                ? (file.size / (1024 * 1024)).toFixed(2) + ' MB' 
+                : sizeInKB + ' KB';
+            
+            metaSize.textContent = sizeFormatted;
+            metaMime.textContent = currentMimeType;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentFullDataUrl = e.target.result;
+                currentRawBase64 = currentFullDataUrl.split(',')[1] || '';
+
+                // Preview Image & Resolution Calculation
+                const img = new Image();
+                img.onload = () => {
+                    metaDimensions.textContent = `${img.width} × ${img.height} px`;
+                    imagePreview.src = currentFullDataUrl;
+                    imageInfoContainer.classList.remove('hidden');
+
+                    updateFormattedOutput();
+                    enableControls(true);
+                };
+                img.src = currentFullDataUrl;
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        // --- Output Format Switching ---
+        function getSelectedFormat() {
+            const selectedRadio = document.querySelector('input[name="outputFormat"]:checked');
+            return selectedRadio ? selectedRadio.value : 'dataUrl';
+        }
+
+        function updateFormattedOutput() {
+            if (!currentFullDataUrl) return;
+
+            const format = getSelectedFormat();
+            let resultText = '';
+
+            switch (format) {
+                case 'dataUrl':
+                    resultText = currentFullDataUrl;
+                    break;
+                case 'raw':
+                    resultText = currentRawBase64;
+                    break;
+                case 'img':
+                    resultText = `<img src="${currentFullDataUrl}" alt="${currentFileName}" />`;
+                    break;
+                case 'css':
+                    resultText = `background-image: url('${currentFullDataUrl}');`;
+                    break;
+                case 'markdown':
+                    resultText = `![${currentFileName}](${currentFullDataUrl})`;
+                    break;
+            }
+
+            outputTextArea.value = resultText;
+            charCount.textContent = resultText.length.toLocaleString();
+            metaLength.textContent = currentRawBase64.length.toLocaleString();
+        }
+
+        formatRadios.forEach(radio => {
+            radio.addEventListener('change', updateFormattedOutput);
+        });
+
+        // --- Enable/Disable controls ---
+        function enableControls(enable) {
+            copyBtn.disabled = !enable;
+            downloadBtn.disabled = !enable;
+        }
+
+        copyBtn.addEventListener('click', () => {
+            if (!outputTextArea.value) return;
+
+            // Copy to Clipboard fallback
+            outputTextArea.select();
+            try {
+                document.execCommand('copy');
+                showToast('클립보드에 복사되었습니다!');
+            } catch (err) {
+                showToast('복사에 실패했습니다.', true);
+            }
+        });
+
+        // Download Text File
+        downloadBtn.addEventListener('click', () => {
+            if (!outputTextArea.value) return;
+
+            const blob = new Blob([outputTextArea.value], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentFileName}_base64.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('텍스트 파일로 저장되었습니다!');
+        });
+
+        // Clear State
+        clearBtn.addEventListener('click', () => {
+            currentRawBase64 = '';
+            currentFullDataUrl = '';
+            outputTextArea.value = '';
+            imagePreview.src = '';
+            imageInfoContainer.classList.add('hidden');
+            fileInput.value = '';
+            charCount.textContent = '0';
+            metaLength.textContent = '-';
+            enableControls(false);
+            showToast('초기화되었습니다.');
+        });
+
+        // Toast Handler
+        let toastTimeout;
+        function showToast(message, isError = false) {
+            clearTimeout(toastTimeout);
+            toastMsg.textContent = message;
+            
+            if (isError) {
+                toast.classList.remove('bg-slate-900', 'dark:bg-sky-600');
+                toast.classList.add('bg-rose-600');
+            } else {
+                toast.classList.remove('bg-rose-600');
+                toast.classList.add('bg-slate-900', 'dark:bg-sky-600');
+            }
+
+            toast.classList.remove('translate-y-12', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-12', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
