@@ -501,7 +501,7 @@
             }
         });
 
-        // 복사하고 브로드컴 AI 열기 버튼 이벤트 (HTTP 414 방지: URL 파라미터 제외 후 클립보드 복사 및 안내)
+        // 복사하고 브로드컴 AI 열기 버튼 이벤트
         broadcomBtn.addEventListener('click', () => {
             if (!outputTextArea.value) return;
 
@@ -509,7 +509,6 @@
             try {
                 document.execCommand('copy');
                 
-                // Base64 데이터는 URL 길이 제한(HTTP 414 에러)을 초과하므로 쿼리 파라미터에 담지 않고 페이지만 엽니다.
                 const broadcomUrl = `https://support.broadcom.com/web/ecx/search`;
                 
                 showToast('복사 완료! 브로드컴 AI 검색창에 Ctrl+V로 붙여넣으세요.');
@@ -559,7 +558,7 @@
             clearTimeout(toastTimeout);
             toastMsg.textContent = message;
             
-            , if (isError) {
+            if (isError) {
                 toast.classList.remove('bg-slate-900', 'dark:bg-sky-600');
                 toast.classList.add('bg-rose-600');
                 toastIcon.className = 'fa-solid fa-circle-exclamation text-white';
