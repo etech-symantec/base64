@@ -317,7 +317,6 @@
             currentFileName = nameHint || 'file';
             currentFileType = (currentMimeType === 'application/pdf' || nameHint.endsWith('.pdf')) ? 'pdf' : 'image';
 
-            // Format size
             const sizeInKB = (file.size / 1024).toFixed(1);
             const sizeFormatted = file.size > 1024 * 1024 
                 ? (file.size / (1024 * 1024)).toFixed(2) + ' MB' 
@@ -327,7 +326,6 @@
             metaMime.textContent = currentMimeType;
             metaMime.title = currentMimeType;
 
-            // UI updates based on File Type
             if (currentFileType === 'pdf') {
                 fileTypeBadge.textContent = 'PDF';
                 fileTypeBadge.className = 'px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-md bg-rose-100 text-rose-700 dark:bg-rose-900/60 dark:text-rose-300';
@@ -503,7 +501,7 @@
             }
         });
 
-        // 복사하고 브로드컴 AI 열기 버튼 이벤트
+        // 복사하고 브로드컴 AI 열기 버튼 이벤트 (HTTP 414 방지: URL 파라미터 제외 후 클립보드 복사 및 안내)
         broadcomBtn.addEventListener('click', () => {
             if (!outputTextArea.value) return;
 
@@ -511,13 +509,13 @@
             try {
                 document.execCommand('copy');
                 
-                const queryValue = encodeURIComponent(outputTextArea.value);
-                const broadcomUrl = `https://support.broadcom.com/web/ecx/search?q=${queryValue}`;
+                // Base64 데이터는 URL 길이 제한(HTTP 414 에러)을 초과하므로 쿼리 파라미터에 담지 않고 페이지만 엽니다.
+                const broadcomUrl = `https://support.broadcom.com/web/ecx/search`;
                 
-                showToast('복사 완료! 브로드컴 AI를 엽니다.');
+                showToast('복사 완료! 브로드컴 AI 검색창에 Ctrl+V로 붙여넣으세요.');
                 setTimeout(() => {
                     window.open(broadcomUrl, '_blank');
-                }, 400);
+                }, 600);
             } catch (err) {
                 showToast('처리에 실패했습니다.', true);
             }
@@ -561,7 +559,7 @@
             clearTimeout(toastTimeout);
             toastMsg.textContent = message;
             
-            if (isError) {
+            , if (isError) {
                 toast.classList.remove('bg-slate-900', 'dark:bg-sky-600');
                 toast.classList.add('bg-rose-600');
                 toastIcon.className = 'fa-solid fa-circle-exclamation text-white';
