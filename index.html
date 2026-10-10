@@ -74,7 +74,6 @@
   </script> 
   <script src="https://etech-symantec.github.io/header.js"></script>
 
-
     <main class="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
         <!-- Left Column: Input / Drag & Drop Zone + Preview -->
@@ -140,7 +139,7 @@
                             <span id="metaMime" class="font-mono font-semibold text-slate-700 dark:text-slate-200 truncate block" title="-">-</span>
                         </div>
                         <div class="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                            <span class="text-slate-400 block mb-0.5">Base64 길인 (자)</span>
+                            <span class="text-slate-400 block mb-0.5">Base64 길이 (자)</span>
                             <span id="metaLength" class="font-mono font-semibold text-sky-600 dark:text-sky-400">-</span>
                         </div>
                     </div>
@@ -156,7 +155,7 @@
                         <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">출력 포맷 선택</h2>
                     </div>
 
-                    <!-- Radio options for formats -->
+                    <!-- Radio options for formats (Plain Base64 기본 선택) -->
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4" id="formatRadioGroup">
                         <label class="cursor-pointer">
                             <input type="radio" name="outputFormat" value="dataUrl" class="peer hidden">
@@ -203,12 +202,15 @@
                         <span class="text-slate-300 dark:text-slate-700">|</span>
                         <span>약 <strong id="tokenCount" class="font-mono text-slate-600 dark:text-slate-300">0</strong> 토큰</span>
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <button id="downloadBtn" disabled class="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+                    <div class="flex items-center space-x-2 flex-wrap gap-y-2">
+                        <button id="downloadBtn" disabled class="px-3.5 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
                             <i class="fa-solid fa-download"></i> TXT 다운로드
                         </button>
-                        <button id="copyBtn" disabled class="px-5 py-2 bg-sky-600 hover:bg-sky-500 active:scale-95 text-white disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-xs font-semibold shadow-md shadow-sky-500/20 transition flex items-center gap-1.5">
+                        <button id="copyBtn" disabled class="px-4 py-2 bg-sky-600 hover:bg-sky-500 active:scale-95 text-white disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-xs font-semibold shadow-md shadow-sky-500/20 transition flex items-center gap-1.5">
                             <i class="fa-regular fa-copy"></i> 복사하기
+                        </button>
+                        <button id="broadcomBtn" disabled class="px-4 py-2 bg-purple-600 hover:bg-purple-500 active:scale-95 text-white disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-xs font-semibold shadow-md shadow-purple-500/20 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-robot"></i> 복사하고 브로드컴 AI 열기
                         </button>
                     </div>
                 </div>
@@ -243,12 +245,12 @@
         const charCount = document.getElementById('charCount');
         const tokenCount = document.getElementById('tokenCount');
         const copyBtn = document.getElementById('copyBtn');
+        const broadcomBtn = document.getElementById('broadcomBtn');
         const downloadBtn = document.getElementById('downloadBtn');
         const clearBtn = document.getElementById('clearBtn');
         const toast = document.getElementById('toast');
         const toastMsg = document.getElementById('toastMsg');
         const toastIcon = document.getElementById('toastIcon');
-        const themeToggleBtn = document.getElementById('themeToggleBtn');
 
         // Application State Variables
         let currentFileType = 'image'; // 'image' | 'pdf'
@@ -256,26 +258,6 @@
         let currentFullDataUrl = '';
         let currentMimeType = 'image/png';
         let currentFileName = 'file';
-
-        // --- Theme Management ---
-        function initTheme() {
-            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
-        }
-        
-        themeToggleBtn.addEventListener('click', () => {
-            document.documentElement.classList.toggle('dark');
-            if (document.documentElement.classList.contains('dark')) {
-                localStorage.theme = 'dark';
-            } else {
-                localStorage.theme = 'light';
-            }
-        });
-
-        initTheme();
 
         // Clipboard Paste Events
         window.addEventListener('paste', (e) => {
@@ -353,7 +335,6 @@
                 htmlTagLabel.innerHTML = 'HTML &lt;iframe&gt;';
                 cssOptionWrapper.classList.add('hidden');
                 
-                // Switch radio to dataUrl if CSS was selected
                 const selectedRadio = document.querySelector('input[name="outputFormat"]:checked');
                 if (selectedRadio && selectedRadio.value === 'css') {
                     document.querySelector('input[name="outputFormat"][value="dataUrl"]').checked = true;
@@ -410,11 +391,9 @@
 
                 metaDimensions.textContent = `${pdf.numPages} 페이지`;
 
-                // Render page 1
                 const page = await pdf.getPage(1);
                 const viewport = page.getViewport({ scale: 1.0 });
 
-                // Set canvas size suitable for preview
                 const scale = Math.min(280 / viewport.height, 400 / viewport.width, 1.2);
                 const scaledViewport = page.getViewport({ scale });
 
@@ -448,7 +427,7 @@
 
         function getSelectedFormat() {
             const selectedRadio = document.querySelector('input[name="outputFormat"]:checked');
-            return selectedRadio ? selectedRadio.value : 'dataUrl';
+            return selectedRadio ? selectedRadio.value : 'raw';
         }
 
         function updateFormattedOutput() {
@@ -476,7 +455,6 @@
                         break;
                 }
             } else {
-                // PDF Output Formats
                 switch (format) {
                     case 'dataUrl':
                         resultText = currentFullDataUrl;
@@ -491,7 +469,7 @@
                         resultText = `[${currentFileName}](${currentFullDataUrl})`;
                         break;
                     default:
-                        resultText = currentFullDataUrl;
+                        resultText = currentRawBase64;
                 }
             }
 
@@ -499,7 +477,6 @@
             
             const len = resultText.length;
             charCount.textContent = len.toLocaleString();
-            // Rough estimation for LLM tokens (~4 characters per token for Base64)
             tokenCount.textContent = Math.ceil(len / 4).toLocaleString();
             metaLength.textContent = currentRawBase64.length.toLocaleString();
         }
@@ -511,6 +488,7 @@
         function enableControls(enable) {
             copyBtn.disabled = !enable;
             downloadBtn.disabled = !enable;
+            broadcomBtn.disabled = !enable;
         }
 
         copyBtn.addEventListener('click', () => {
@@ -522,6 +500,26 @@
                 showToast('클립보드에 복사되었습니다!');
             } catch (err) {
                 showToast('복사에 실패했습니다.', true);
+            }
+        });
+
+        // 복사하고 브로드컴 AI 열기 버튼 이벤트
+        broadcomBtn.addEventListener('click', () => {
+            if (!outputTextArea.value) return;
+
+            outputTextArea.select();
+            try {
+                document.execCommand('copy');
+                
+                const queryValue = encodeURIComponent(outputTextArea.value);
+                const broadcomUrl = `https://support.broadcom.com/web/ecx/search?q=${queryValue}`;
+                
+                showToast('복사 완료! 브로드컴 AI를 엽니다.');
+                setTimeout(() => {
+                    window.open(broadcomUrl, '_blank');
+                }, 400);
+            } catch (err) {
+                showToast('처리에 실패했습니다.', true);
             }
         });
 
