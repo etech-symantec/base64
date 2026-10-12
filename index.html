@@ -84,17 +84,24 @@
                 <input type="file" id="fileInput" accept="image/*,application/pdf" class="hidden">
                 
                 <div id="dropZoneContent" class="space-y-3 pointer-events-none">
-                    <div class="w-14 h-14 mx-auto rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-400 flex items-center justify-center text-2xl group-hover:scale-110 transition duration-200">
+                    <div class="w-12 h-12 mx-auto rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-400 flex items-center justify-center text-xl group-hover:scale-110 transition duration-200">
                         <i class="fa-solid fa-cloud-arrow-up"></i>
                     </div>
-                    <div>
+                    <div class="space-y-1">
                         <p class="font-semibold text-slate-700 dark:text-slate-200 text-sm">
                             <span class="text-sky-600 dark:text-sky-400 underline decoration-sky-400/30 underline-offset-4">클릭하여 파일 선택</span> 또는 드래그 & 드롭
                         </p>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                            <kbd class="px-2 py-1 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded text-[11px] font-mono shadow-sm">Ctrl</kbd> + <kbd class="px-2 py-1 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded text-[11px] font-mono shadow-sm">V</kbd> 로 복사한 이미지/PDF 파일을 직접 붙여넣으세요!<br>이미지/PDF 파일 업로드가 막힌 환경에서 변환된 base64코드로<br>브로드컴 AI/유지보수 페이지 등에 업로드를 할 수 있습니다.
+                        <p class="text-xs text-slate-500 dark:text-slate-400">
+                            <kbd class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded text-[10px] font-mono shadow-sm">Ctrl</kbd> + <kbd class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded text-[10px] font-mono shadow-sm">V</kbd> 로 복사한 이미지/PDF 파일을 직접 붙여넣으세요!
                         </p>
                     </div>
+
+                    <!-- 가독성을 높인 안내 및 주의 문구 영역 -->
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400 space-y-1 pt-2 border-t border-slate-100 dark:border-slate-700/60 max-w-sm mx-auto text-left">
+                        <p>💡 <strong class="text-slate-600 dark:text-slate-300">활용 용도:</strong> 업로드가 제한된 환경(브로드컴 AI, 유지보수 페이지 등)에서 Base64 코드로 변환하여 사용</p>
+                        <p class="text-amber-600 dark:text-amber-400 font-medium">⚠️ 너무 큰 스크린샷 및 PDF 파일은 붙여넣기가 어려울 수 있으니 꼭 필요한 부분만 캡처해서 사용하는 걸 권장합니다.</p>
+                    </div>
+
                     <div class="flex items-center justify-center gap-2 pt-1 text-[11px] text-slate-400">
                         <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">PNG / JPG / WEBP</span>
                         <span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">PDF 문서</span>
