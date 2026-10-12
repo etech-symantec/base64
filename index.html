@@ -24,7 +24,7 @@
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     </script>
     <!-- Tesseract.js CDN for OCR -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -438,45 +438,190 @@
             }
         }
 
-        // OCR 인식률 대폭 향상을 위한 이진화(Binarization) 및 대비 강화 전처리 함수
-        async function preprocessImageForOcr(sourceDataUrl) {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    
-                    // 2배 크기로 업스케일링하여 작은 글자 선명도 확보
-                    let scale = img.width < 1600 ? 1600 / img.width : 1.5;
-                    canvas.width = img.width * scale;
-                    canvas.height = img.height * scale;
-                    
-                    ctx.imageSmoothingEnabled = true;
-                    ctx.imageSmoothingQuality = 'high';
-                    
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    
-                    // 픽셀 이진화(Thresholding) 처리로 배경 노이즈 및 아이콘 제거
-                    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    const data = imgData.data;
-                    for (let i = 0; i < data.length; i += 4) {
-                        // 그레이스케일 변환
-                        const avg = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
-                        // 임계값(Threshold) 기준 흑백 대비 처리 (어두운 글자는 완전 검정, 밝은 배경은 완전 백색)
-                        const val = avg < 200 ? 0 : 255;
-                        data[i] = val;     // R
-                        data[i + 1] = val; // G
-                        data[i + 2] = val; // B
-                    }
-                    ctx.putImageData(imgData, 0, 0);
-                    
-                    resolve(canvas.toDataURL('image/png'));
-                };
-                img.src = sourceDataUrl;
+        // ===== OCR 엔진: 워커 재사용 + 다단계 전처리 + bbox 기반 후처리 =====
+        let ocrWorker = null;
+        let ocrProgress = () => {};
+        const HANGUL = /[\uAC00-\uD7A3]/;
+
+        async function getOcrWorker() {
+            if (ocrWorker) return ocrWorker;
+            ocrWorker = await Tesseract.createWorker(['kor', 'eng'], 1, {
+                logger: m => { if (m.status === 'recognizing text') ocrProgress(m.progress); }
             });
+            // 파라미터는 반드시 setParameters로 지정해야 적용됨 (recognize 옵션으로 넘기면 무시됨)
+            await ocrWorker.setParameters({
+                tessedit_pageseg_mode: '3',      // 자동 레이아웃 분석 (스크린샷/문서 혼합에 안정적)
+                preserve_interword_spaces: '1',
+                user_defined_dpi: '300'
+            });
+            return ocrWorker;
+        }
+
+        function loadImage(src) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = src;
+            });
+        }
+
+        function otsuThreshold(hist, total) {
+            let sum = 0;
+            for (let i = 0; i < 256; i++) sum += i * hist[i];
+            let sB = 0, wB = 0, max = 0, t = 127;
+            for (let i = 0; i < 256; i++) {
+                wB += hist[i];
+                if (!wB) continue;
+                const wF = total - wB;
+                if (!wF) break;
+                sB += i * hist[i];
+                const d = sB / wB - (sum - sB) / wF;
+                const v = wB * wF * d * d;
+                if (v > max) { max = v; t = i; }
+            }
+            return t;
+        }
+
+        // mode 'gray': 그레이스케일 + 대비 정규화 + 다크모드 자동 반전 (안티앨리어싱 보존)
+        // mode 'binary': 위 처리 + Otsu 자동 임계값 이진화
+        async function preprocessImageForOcr(src, mode) {
+            const img = await loadImage(src);
+            // 작은 이미지는 최대 3배까지 확대, 너무 큰 이미지는 3200px로 축소 (속도/정확도 균형)
+            const scale = img.width < 2000 ? Math.min(3, 2000 / img.width) : Math.min(1, 3200 / img.width);
+            const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+            const c = document.createElement('canvas');
+            c.width = w; c.height = h;
+            const ctx = c.getContext('2d', { willReadFrequently: true });
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, w, h);
+            ctx.drawImage(img, 0, 0, w, h);
+
+            const imgData = ctx.getImageData(0, 0, w, h);
+            const px = imgData.data, total = w * h;
+            const gray = new Uint8Array(total), hist = new Uint32Array(256);
+            let sum = 0;
+            for (let i = 0, j = 0; i < px.length; i += 4, j++) {
+                const g = Math.round(px[i] * 0.299 + px[i + 1] * 0.587 + px[i + 2] * 0.114);
+                gray[j] = g; hist[g]++; sum += g;
+            }
+            // 상·하위 1% 기준 대비 스트레칭
+            let lo = 0, hi = 255, acc = 0;
+            while (lo < 255 && (acc += hist[lo]) < total * 0.01) lo++;
+            acc = 0;
+            while (hi > 0 && (acc += hist[hi]) < total * 0.01) hi--;
+            if (hi - lo < 30) { lo = 0; hi = 255; }
+            const invert = sum / total < 110; // 어두운 배경(다크모드) → 흰 배경/검은 글자로 반전
+            const lut = new Uint8Array(256), hist2 = new Uint32Array(256);
+            for (let g = 0; g < 256; g++) {
+                let v = Math.max(0, Math.min(255, Math.round((g - lo) * 255 / (hi - lo))));
+                lut[g] = invert ? 255 - v : v;
+            }
+            for (let g = 0; g < 256; g++) hist2[lut[g]] += hist[g];
+            const t = mode === 'binary' ? otsuThreshold(hist2, total) : -1;
+            for (let i = 0, j = 0; i < px.length; i += 4, j++) {
+                let v = lut[gray[j]];
+                if (t >= 0) v = v > t ? 255 : 0;
+                px[i] = px[i + 1] = px[i + 2] = v;
+                px[i + 3] = 255;
+            }
+            ctx.putImageData(imgData, 0, 0);
+
+            // 가장자리에 흰 여백 추가 (Tesseract는 여백이 있을 때 인식률이 높음)
+            const pad = 30;
+            const out = document.createElement('canvas');
+            out.width = w + pad * 2; out.height = h + pad * 2;
+            const octx = out.getContext('2d');
+            octx.fillStyle = '#FFFFFF';
+            octx.fillRect(0, 0, out.width, out.height);
+            octx.drawImage(c, pad, pad);
+            return out.toDataURL('image/png');
+        }
+
+        // 단어 bbox 간격으로 공백 재구성: 한글 글자 사이에 끼는 가짜 공백 제거, 저신뢰 노이즈(아이콘 등) 제거
+        function rebuildText(data) {
+            if (!data.lines || !data.lines.length) {
+                return (data.text || '').split('\n').map(l => l.trim()).filter(Boolean).join('\n');
+            }
+            const out = [];
+            for (const line of data.lines) {
+                const words = (line.words || []).filter(w => {
+                    const t = w.text.trim();
+                    return t && !(w.confidence < 30 && t.length <= 2);
+                });
+                let s = '';
+                words.forEach((w, i) => {
+                    const t = w.text.trim();
+                    if (i > 0) {
+                        const p = words[i - 1], pt = p.text.trim();
+                        const gap = w.bbox.x0 - p.bbox.x1;
+                        const h = Math.max(w.bbox.y1 - w.bbox.y0, p.bbox.y1 - p.bbox.y0);
+                        const glue = HANGUL.test(pt.slice(-1)) && HANGUL.test(t[0]) && gap < h * 0.2;
+                        if (!glue) s += ' ';
+                    }
+                    s += t;
+                });
+                if (s.trim()) out.push(s.trim());
+            }
+            return out.join('\n');
+        }
+
+        // 1차: gray 패스 → 신뢰도가 낮으면 2차: binary 패스 후 더 나은 결과 선택
+        async function ocrImage(src, label = '') {
+            const worker = await getOcrWorker();
+            const run = async (mode, tag) => {
+                ocrProgress = p => { outputTextArea.value = `OCR 분석 중${label}${tag}... (${Math.round(p * 100)}%)`; };
+                const { data } = await worker.recognize(await preprocessImageForOcr(src, mode));
+                return data;
+            };
+            let best = await run('gray', '');
+            if (best.confidence < 80) {
+                const alt = await run('binary', ' [보정 재시도]');
+                if (alt.confidence > best.confidence) best = alt;
+            }
+            return { text: rebuildText(best), confidence: best.confidence };
+        }
+
+        function pdfItemsToText(items) {
+            let s = '', y = null;
+            for (const it of items) {
+                const ty = it.transform[5];
+                if (y !== null && Math.abs(ty - y) > 2 && !s.endsWith('\n')) s += '\n';
+                s += it.str;
+                if (it.hasEOL && !s.endsWith('\n')) s += '\n';
+                y = ty;
+            }
+            return s.split('\n').map(l => l.trim()).filter(Boolean).join('\n');
+        }
+
+        // PDF: 텍스트 레이어가 있으면 그대로 추출(100% 정확), 스캔 페이지만 OCR. 전 페이지 처리(최대 30쪽)
+        async function ocrPdf() {
+            const pdf = await pdfjsLib.getDocument(currentFullDataUrl).promise;
+            const maxPages = Math.min(pdf.numPages, 30);
+            const parts = [];
+            let textPages = 0, ocrPages = 0, confSum = 0;
+            for (let n = 1; n <= maxPages; n++) {
+                const page = await pdf.getPage(n);
+                const direct = pdfItemsToText((await page.getTextContent()).items);
+                if (direct.replace(/\s/g, '').length >= 20) {
+                    parts.push(direct); textPages++; continue;
+                }
+                const vp = page.getViewport({ scale: 2.5 });
+                const c = document.createElement('canvas');
+                c.width = vp.width; c.height = vp.height;
+                await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+                const r = await ocrImage(c.toDataURL('image/png'), ` (${n}/${maxPages}쪽)`);
+                parts.push(r.text); ocrPages++; confSum += r.confidence;
+            }
+            const text = maxPages > 1
+                ? parts.map((t, i) => `--- ${i + 1}쪽 ---\n${t}`).join('\n\n')
+                : parts[0];
+            const note = `추출 완료 (텍스트 ${textPages}쪽 / OCR ${ocrPages}쪽` +
+                (ocrPages ? `, 신뢰도 ${Math.round(confSum / ocrPages)}%` : '') +
+                (pdf.numPages > maxPages ? `, 앞 ${maxPages}쪽만 처리` : '') + ')';
+            return { text, note };
         }
 
         function getSelectedFormat() {
@@ -497,40 +642,20 @@
                 } else if (isOcrLoading) {
                     outputTextArea.value = 'OCR 분석이 이미 진행 중입니다...';
                 } else {
-                    outputTextArea.value = 'OCR 고정밀 분석 중 (이미지 이진화 및 텍스트 추출 중)...';
+                    outputTextArea.value = 'OCR 엔진 준비 중... (최초 1회 한글 언어 데이터를 내려받습니다)';
                     isOcrLoading = true;
                     try {
-                        let targetSource = currentFullDataUrl;
-                        if (currentFileType === 'pdf' && pdfCanvas.width > 0) {
-                            targetSource = pdfCanvas.toDataURL('image/png');
+                        let text, note;
+                        if (currentFileType === 'pdf') {
+                            ({ text, note } = await ocrPdf());
+                        } else {
+                            const r = await ocrImage(currentFullDataUrl);
+                            text = r.text;
+                            note = `OCR 텍스트 추출 완료 (신뢰도 ${Math.round(r.confidence)}%)`;
                         }
-                        
-                        // 전처리 적용 (이진화 + 업스케일링)
-                        const preprocessedImage = await preprocessImageForOcr(targetSource);
-
-                        const { data: { text } } = await Tesseract.recognize(
-                            preprocessedImage,
-                            'kor+eng',
-                            { 
-                                tessedit_pageseg_mode: '4', // 단일 열/표 형태 구조 최적화 (PSM 4)
-                                logger: m => {
-                                    if (m.status === 'recognizing text') {
-                                        const progress = Math.round(m.progress * 100);
-                                        outputTextArea.value = `OCR 고정밀 분석 중... (${progress}%)`;
-                                    }
-                                }
-                            }
-                        );
-                        
-                        // 줄 단위로 정리하여 불필요한 공백 제거
-                        const cleanedText = text.split('\n')
-                            .map(line => line.trim())
-                            .filter(line => line.length > 0)
-                            .join('\n');
-
-                        cachedOcrText = cleanedText ? cleanedText : '인식된 텍스트가 없습니다.';
+                        cachedOcrText = (text && text.trim()) ? text.trim() : '인식된 텍스트가 없습니다.';
                         outputTextArea.value = cachedOcrText;
-                        showToast('고정밀 OCR 텍스트 추출 완료!');
+                        showToast(note);
                     } catch (err) {
                         console.error('OCR 에러:', err);
                         cachedOcrText = 'OCR 분석 중 오류가 발생했습니다.';
