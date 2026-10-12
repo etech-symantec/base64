@@ -23,6 +23,8 @@
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     </script>
+    <!-- Tesseract.js CDN for OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -98,7 +100,7 @@
 
                     <!-- 가독성을 높인 안내 및 주의 문구 영역 -->
                     <div class="text-[11px] text-slate-500 dark:text-slate-400 space-y-1 pt-2 border-t border-slate-100 dark:border-slate-700/60 max-w-sm mx-auto text-left">
-                        <p>💡 <strong class="text-slate-600 dark:text-slate-300">활용 용도:</strong> 업로드가 제한된 환경(브로드컴 AI, 유지보수 페이지 등)에서 Base64 코드로 변환하여 사용</p>
+                        <p>💡 <strong class="text-slate-600 dark:text-slate-300">활용 용도:</strong> 업로드가 제한된 환경(브로드컴 AI, 유지보수 페이지 등)에서 Base64 코드로 변환하거나 OCR로 텍스트 추출</p>
                         <p class="text-amber-600 dark:text-amber-400 font-medium">⚠️ 너무 큰 스크린샷 및 PDF 파일은 붙여넣기가 어려울 수 있으니 꼭 필요한 부분만 캡처해서 사용하는 걸 권장합니다.</p>
                     </div>
 
@@ -162,8 +164,14 @@
                         <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">출력 포맷 선택</h2>
                     </div>
 
-                    <!-- Radio options for formats (Plain Base64 기본 선택) -->
+                    <!-- Radio options for formats (Plain Base64 기본 선택, OCR 추가) -->
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4" id="formatRadioGroup">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="outputFormat" value="raw" class="peer hidden" checked>
+                            <div class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-sky-500 peer-checked:text-white peer-checked:border-sky-500 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition text-center">
+                                Plain Base64
+                            </div>
+                        </label>
                         <label class="cursor-pointer">
                             <input type="radio" name="outputFormat" value="dataUrl" class="peer hidden">
                             <div class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-sky-500 peer-checked:text-white peer-checked:border-sky-500 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition text-center">
@@ -171,9 +179,9 @@
                             </div>
                         </label>
                         <label class="cursor-pointer">
-                            <input type="radio" name="outputFormat" value="raw" class="peer hidden" checked>
+                            <input type="radio" name="outputFormat" value="ocr" class="peer hidden">
                             <div class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-sky-500 peer-checked:text-white peer-checked:border-sky-500 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition text-center">
-                                Plain Base64
+                                OCR 텍스트 추출
                             </div>
                         </label>
                         <label class="cursor-pointer">
@@ -265,6 +273,8 @@
         let currentFullDataUrl = '';
         let currentMimeType = 'image/png';
         let currentFileName = 'file';
+        let cachedOcrText = '';
+        let isOcrLoading = false;
 
         // Clipboard Paste Events
         window.addEventListener('paste', (e) => {
@@ -323,6 +333,7 @@
             currentMimeType = file.type || (nameHint.endsWith('.pdf') ? 'application/pdf' : 'image/png');
             currentFileName = nameHint || 'file';
             currentFileType = (currentMimeType === 'application/pdf' || nameHint.endsWith('.pdf')) ? 'pdf' : 'image';
+            cachedOcrText = ''; // Reset OCR cache on new file
 
             const sizeInKB = (file.size / 1024).toFixed(1);
             const sizeFormatted = file.size > 1024 * 1024 
@@ -342,7 +353,7 @@
                 
                 const selectedRadio = document.querySelector('input[name="outputFormat"]:checked');
                 if (selectedRadio && selectedRadio.value === 'css') {
-                    document.querySelector('input[name="outputFormat"][value="dataUrl"]').checked = true;
+                    document.querySelector('input[name="outputFormat"][value="raw"]').checked = true;
                 }
             } else {
                 fileTypeBadge.textContent = 'IMAGE';
@@ -435,11 +446,55 @@
             return selectedRadio ? selectedRadio.value : 'raw';
         }
 
-        function updateFormattedOutput() {
+        async function updateFormattedOutput() {
             if (!currentFullDataUrl) return;
 
             const format = getSelectedFormat();
             let resultText = '';
+
+            if (format === 'ocr') {
+                if (cachedOcrText) {
+                    outputTextArea.value = cachedOcrText;
+                    updateStats(cachedOcrText.length);
+                } else if (isOcrLoading) {
+                    outputTextArea.value = 'OCR 분석이 이미 진행 중입니다...';
+                } else {
+                    outputTextArea.value = 'OCR 분석 중입니다 (잠시만 기다려주세요)...';
+                    isOcrLoading = true;
+                    try {
+                        let targetSource = currentFullDataUrl;
+                        // PDF인 경우 캔버스 이미지를 활용
+                        if (currentFileType === 'pdf' && pdfCanvas.width > 0) {
+                            targetSource = pdfCanvas.toDataURL('image/png');
+                        }
+                        
+                        const { data: { text } } = await Tesseract.recognize(
+                            targetSource,
+                            'kor+eng',
+                            { 
+                                logger: m => {
+                                    if (m.status === 'recognizing text') {
+                                        const progress = Math.round(m.progress * 100);
+                                        outputTextArea.value = `OCR 분석 중... (${progress}%)`;
+                                    }
+                                }
+                            }
+                        );
+                        cachedOcrText = text.trim() ? text.trim() : '인식된 텍스트가 없습니다.';
+                        outputTextArea.value = cachedOcrText;
+                        showToast('OCR 텍스트 추출이 완료되었습니다!');
+                    } catch (err) {
+                        console.error('OCR 에러:', err);
+                        cachedOcrText = 'OCR 분석 중 오류가 발생했습니다.';
+                        outputTextArea.value = cachedOcrText;
+                        showToast('OCR 분석 실패', true);
+                    } finally {
+                        isOcrLoading = false;
+                        updateStats(outputTextArea.value.length);
+                    }
+                }
+                return;
+            }
 
             if (currentFileType === 'image') {
                 switch (format) {
@@ -479,11 +534,13 @@
             }
 
             outputTextArea.value = resultText;
-            
-            const len = resultText.length;
+            updateStats(resultText.length);
+        }
+
+        function updateStats(len) {
             charCount.textContent = len.toLocaleString();
             tokenCount.textContent = Math.ceil(len / 4).toLocaleString();
-            metaLength.textContent = currentRawBase64.length.toLocaleString();
+            metaLength.textContent = currentRawBase64.length ? currentRawBase64.length.toLocaleString() : '-';
         }
 
         formatRadios.forEach(radio => {
@@ -530,7 +587,8 @@
         downloadBtn.addEventListener('click', () => {
             if (!outputTextArea.value) return;
 
-            const ext = currentFileType === 'pdf' ? '_pdf_base64.txt' : '_image_base64.txt';
+            const format = getSelectedFormat();
+            const ext = format === 'ocr' ? '_ocr_text.txt' : (currentFileType === 'pdf' ? '_pdf_base64.txt' : '_image_base64.txt');
             const blob = new Blob([outputTextArea.value], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -546,6 +604,7 @@
         clearBtn.addEventListener('click', () => {
             currentRawBase64 = '';
             currentFullDataUrl = '';
+            cachedOcrText = '';
             outputTextArea.value = '';
             imagePreview.src = '';
             imagePreview.classList.add('hidden');
