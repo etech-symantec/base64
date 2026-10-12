@@ -181,7 +181,7 @@
                         <label class="cursor-pointer">
                             <input type="radio" name="outputFormat" value="ocr" class="peer hidden">
                             <div class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 peer-checked:bg-sky-500 peer-checked:text-white peer-checked:border-sky-500 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition text-center">
-                                OCR 텍스트 추출
+                                OCR 텍스트 추출 (고정밀)
                             </div>
                         </label>
                         <label class="cursor-pointer">
@@ -408,19 +408,16 @@
                 metaDimensions.textContent = `${pdf.numPages} 페이지`;
 
                 const page = await pdf.getPage(1);
-                const viewport = page.getViewport({ scale: 1.0 });
-
-                const scale = Math.min(280 / viewport.height, 400 / viewport.width, 1.2);
-                const scaledViewport = page.getViewport({ scale });
+                const viewport = page.getViewport({ scale: 1.5 }); // 고해상도 렌더링
 
                 const canvas = pdfCanvas;
                 const context = canvas.getContext('2d');
-                canvas.height = scaledViewport.height;
-                canvas.width = scaledViewport.width;
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
 
                 const renderContext = {
                     canvasContext: context,
-                    viewport: scaledViewport
+                    viewport: viewport
                 };
 
                 await page.render(renderContext).promise;
@@ -434,11 +431,44 @@
                 console.error('PDF 렌더링 에러:', err);
                 loadingSpinner.classList.add('hidden');
                 metaDimensions.textContent = '미리보기 불가';
-                showToast('PDF 미리보기를 불러올 수 없지만 Base64 변환은 완료되었습니다.', true);
+                showToast('PDF 미리보기를 불러올 수 없지만 변환은 완료되었습니다.', true);
                 
                 updateFormattedOutput();
                 enableControls(true);
             }
+        }
+
+        // OCR 인식률 향상을 위한 고해상도 업스케일 및 전처리 함수
+        async function preprocessImageForOcr(sourceDataUrl) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // 텍스트가 작을 경우 인식률을 높이기 위해 최소 너비 1400px 이상으로 업스케일링
+                    let scale = 1;
+                    if (img.width < 1400) {
+                        scale = 1400 / img.width;
+                    }
+                    
+                    canvas.width = img.width * scale;
+                    canvas.height = img.height * scale;
+                    
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    
+                    // 흰 배경 기본 채우기 (투명 PNG 대비)
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    resolve(canvas.toDataURL('image/png'));
+                };
+                img.src = sourceDataUrl;
+            });
         }
 
         function getSelectedFormat() {
@@ -459,30 +489,40 @@
                 } else if (isOcrLoading) {
                     outputTextArea.value = 'OCR 분석이 이미 진행 중입니다...';
                 } else {
-                    outputTextArea.value = 'OCR 분석 중입니다 (잠시만 기다려주세요)...';
+                    outputTextArea.value = 'OCR 고정밀 분석 중입니다 (해상도 최적화 및 텍스트 추출 중)...';
                     isOcrLoading = true;
                     try {
                         let targetSource = currentFullDataUrl;
-                        // PDF인 경우 캔버스 이미지를 활용
                         if (currentFileType === 'pdf' && pdfCanvas.width > 0) {
                             targetSource = pdfCanvas.toDataURL('image/png');
                         }
                         
+                        // 전처리 (업스케일링) 적용
+                        const preprocessedImage = await preprocessImageForOcr(targetSource);
+
                         const { data: { text } } = await Tesseract.recognize(
-                            targetSource,
+                            preprocessedImage,
                             'kor+eng',
                             { 
+                                tessedit_pageseg_mode: '6', // 단일 텍스트 블록/테이블 형태 구조 최적화
                                 logger: m => {
                                     if (m.status === 'recognizing text') {
                                         const progress = Math.round(m.progress * 100);
-                                        outputTextArea.value = `OCR 분석 중... (${progress}%)`;
+                                        outputTextArea.value = `OCR 고정밀 분석 중... (${progress}%)`;
                                     }
                                 }
                             }
                         );
-                        cachedOcrText = text.trim() ? text.trim() : '인식된 텍스트가 없습니다.';
+                        
+                        // 불필요한 공백 및 빈 줄 정리하여 가독성 향상
+                        const cleanedText = text.split('\n')
+                            .map(line => line.trim())
+                            .filter(line => line.length > 0)
+                            .join('\n');
+
+                        cachedOcrText = cleanedText ? cleanedText : '인식된 텍스트가 없습니다.';
                         outputTextArea.value = cachedOcrText;
-                        showToast('OCR 텍스트 추출이 완료되었습니다!');
+                        showToast('고정밀 OCR 텍스트 추출이 완료되었습니다!');
                     } catch (err) {
                         console.error('OCR 에러:', err);
                         cachedOcrText = 'OCR 분석 중 오류가 발생했습니다.';
